@@ -113,6 +113,26 @@ recursive pure subroutine count_size_recursive(node, tree_size)
 
 end subroutine
 
+recursive pure subroutine collect_items_recursive(node, items, item_index, what)
+   type(binary_tree_node_t), allocatable, intent(in) :: node
+   type(item_t), intent(inout) :: items(:)
+   integer, intent(inout) :: item_index
+   character(len=1), intent(in) :: what
+
+   if (.not. allocated(node)) then
+      return
+   end if
+
+   item_index = item_index + 1
+
+   if (what /= 'V') items(item_index) % key = node % hashed_key % orig_key
+   if (what /= 'K') items(item_index) % value = node % value
+
+   call collect_items_recursive(node % lo_leaf, items, item_index, what)
+   call collect_items_recursive(node % hi_leaf, items, item_index, what)
+
+end subroutine
+
 
 elemental module function key_in_tree(key, tree) result(contains)
    class(*), intent(in) :: key
@@ -133,6 +153,27 @@ elemental module function tree_size(tree)
 
 end function
 
+!> retrieve copy of all stored keys
+pure module function get_tree_keys(tree) result(keys)
+   !> Container to be queried.
+   class(dict_set_base_t), intent(in) :: tree
+   !> List of items
+   type(item_t), allocatable :: keys(:)
+
+   integer :: item_num, n_elems
+
+   n_elems = size(tree)
+   allocate(keys(n_elems))
+   if (n_elems == 0) return
+
+   item_num = 0
+
+   call collect_items_recursive(tree % root, keys, item_num, 'K')
+
+   if (item_num /= n_elems) &
+      error stop "yaftree: inconsistency while collecting tree items."
+
+end function
 
 pure module subroutine dict_insert(tab, key, val)
    class(dict_t), intent(inout) :: tab

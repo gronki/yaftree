@@ -38,6 +38,8 @@ public :: fnv_hash
 type :: hashed_key_t
    !> Key, TRANSFERed to int8 array.
    integer(kind=int8), allocatable :: key(:)
+   !> Original key, only kept for retrieval
+   class(*), allocatable :: orig_key
    !> Computer hash value.
    integer(kind=hash_k) :: hash = 0
 end type
@@ -87,6 +89,11 @@ type :: binary_tree_node_t
    class(*), allocatable :: value
 end type
 
+!> helper class to wrap allocatable items for keys/values
+type :: item_t
+   class(*), allocatable :: key, value
+end type
+
 type :: dict_set_base_t
    !> Tree root.
    type(binary_tree_node_t), allocatable, private :: root
@@ -97,6 +104,7 @@ contains
    procedure, pass(tree) :: contains => key_in_tree
    ! below bugs ifx2025, so need to use interface
    ! generic :: operator(.in.) => contains
+   procedure :: keys => get_tree_keys
 end type
 
 interface
@@ -108,6 +116,13 @@ interface
       class(dict_set_base_t), intent(in) :: tree
       !> Return value, or yahft_not_found if key is not present.
       logical :: contains
+   end function
+   !> retrieve copy of all stored keys
+   pure module function get_tree_keys(tree) result(keys)
+      !> Container to be queried.
+      class(dict_set_base_t), intent(in) :: tree
+      !> List of items
+      type(item_t), allocatable :: keys(:)
    end function
 end interface
 

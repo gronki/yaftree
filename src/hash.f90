@@ -32,6 +32,7 @@ pure module function new_hashed_key(hasher, key) result(hashed_key)
    class(*), intent(in) :: key
    type(hashed_key_t) :: hashed_key
 
+   hashed_key % orig_key = key
    hashed_key % key = transfer(key, hashed_key % key)
    hashed_key % hash = hasher(hashed_key % key)
 

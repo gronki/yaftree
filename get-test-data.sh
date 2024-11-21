@@ -1,0 +1,1 @@
+curl -L https://github.com/arstgit/high-frequency-vocabulary/raw/refs/heads/master/30k.txt -o english30k.txt

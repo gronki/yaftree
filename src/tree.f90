@@ -200,9 +200,9 @@ pure module subroutine dict_set_copy(dest, source)
 
    if ( allocated(dest % root) ) deallocate( dest % root )
 
-   call binary_tree_copy( dest_node = dest % root, source_node = source % root ) 
+   call binary_tree_copy( dest_node = dest % root, source_node = source % root )
    dest % hasher => source % hasher
-   
+
 end subroutine
 
 pure module subroutine dict_insert(tab, key, val)

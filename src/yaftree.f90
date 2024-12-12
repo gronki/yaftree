@@ -12,24 +12,24 @@ integer, parameter :: hash_k = int32
 public :: hash_k
 
 abstract interface
-   !< Hashing function prototype.
-   pure function hasher_proto(data) result(hash)
-      import :: int8, hash_k
-      !> Data, TRANSFERed to int8 array.
-      integer(int8), intent(in) :: data(:)
-      !> Computed hash.
-      integer(hash_k) :: hash
-   end function
+ !< Hashing function prototype.
+pure function hasher_proto(data) result(hash)
+   import :: int8, hash_k
+   !> Data, TRANSFERed to int8 array.
+   integer(int8), intent(in) :: data(:)
+   !> Computed hash.
+   integer(hash_k) :: hash
+end function
 end interface
 
 interface
-   !> FNV hash algorithm.
-   pure module function fnv_hash(data) result(hash)
-      !> Data, TRANSFERed to int8 array.
-      integer(int8), intent(in) :: data(:)
-      !> Computed hash.
-      integer(hash_k) :: hash
-   end function
+ !> FNV hash algorithm.
+pure module function fnv_hash(data) result(hash)
+   !> Data, TRANSFERed to int8 array.
+   integer(int8), intent(in) :: data(:)
+   !> Computed hash.
+   integer(hash_k) :: hash
+end function
 end interface
 
 public :: fnv_hash
@@ -45,31 +45,31 @@ type :: hashed_key_t
 end type
 
 interface hashed_key_t
-   !> Convenience function for hashing any type.
-   pure module function new_hashed_key(hasher, key) result(hashed_key)
-      !> Hasher procedure.
-      procedure(hasher_proto) :: hasher
-      !> Key of any type to be hashed.
-      !> Keep in mind that derived types with pointer or allocatable components
-      !> will not produce the expected behavior.
-      class(*), intent(in) :: key
-      !> Resulting hash.
-      type(hashed_key_t) :: hashed_key
-   end function
+ !> Convenience function for hashing any type.
+pure module function new_hashed_key(hasher, key) result(hashed_key)
+   !> Hasher procedure.
+   procedure(hasher_proto) :: hasher
+   !> Key of any type to be hashed.
+   !> Keep in mind that derived types with pointer or allocatable components
+   !> will not produce the expected behavior.
+   class(*), intent(in) :: key
+   !> Resulting hash.
+   type(hashed_key_t) :: hashed_key
+end function
 end interface
 
 interface operator(==)
-   elemental module function hashed_keys_equal(key, other)
-      type(hashed_key_t), intent(in) :: key, other
-      logical :: hashed_keys_equal
-   end function
+elemental module function hashed_keys_equal(key, other)
+   type(hashed_key_t), intent(in) :: key, other
+   logical :: hashed_keys_equal
+end function
 end interface
 
 interface operator(<)
-   elemental module function hashed_keys_less(key, other)
-      type(hashed_key_t), intent(in) :: key, other
-      logical :: hashed_keys_less
-   end function
+elemental module function hashed_keys_less(key, other)
+   type(hashed_key_t), intent(in) :: key, other
+   logical :: hashed_keys_less
+end function
 end interface
 
 
@@ -90,10 +90,10 @@ type :: binary_tree_node_t
 end type
 
 interface
-   pure recursive module subroutine binary_tree_copy( source_node, dest_node )
-      type(binary_tree_node_t), intent(in), allocatable :: source_node
-      type(binary_tree_node_t), intent(inout), allocatable :: dest_node
-   end subroutine
+pure recursive module subroutine binary_tree_copy( source_node, dest_node )
+   type(binary_tree_node_t), intent(in), allocatable :: source_node
+   type(binary_tree_node_t), intent(inout), allocatable :: dest_node
+end subroutine
 end interface
 
 !> helper class to wrap allocatable items for keys/values
@@ -119,40 +119,40 @@ contains
 end type
 
 interface
-   !> Subroutine to get value.
-   elemental module function key_in_tree(key, tree) result(contains)
-      !> Key or set item to be queried.
-      class(*), intent(in) :: key
-      !> Hashmap.
-      class(dict_set_base_t), intent(in) :: tree
-      !> Return value, or yahft_not_found if key is not present.
-      logical :: contains
-   end function
-   !> retrieve copy of all stored keys
-   pure module function get_tree_keys(tree) result(keys)
-      !> Container to be queried.
-      class(dict_set_base_t), intent(in) :: tree
-      !> List of items
-      type(item_t), allocatable :: keys(:)
-   end function
-   !> Assignment (copy)
-   pure module subroutine dict_set_copy(dest, source)
-      class(dict_set_base_t), intent(inout) :: dest
-      class(dict_set_base_t), intent(in) :: source
-   end subroutine
+ !> Subroutine to get value.
+elemental module function key_in_tree(key, tree) result(contains)
+   !> Key or set item to be queried.
+   class(*), intent(in) :: key
+   !> Hashmap.
+   class(dict_set_base_t), intent(in) :: tree
+   !> Return value, or yahft_not_found if key is not present.
+   logical :: contains
+end function
+ !> retrieve copy of all stored keys
+pure module function get_tree_keys(tree) result(keys)
+   !> Container to be queried.
+   class(dict_set_base_t), intent(in) :: tree
+   !> List of items
+   type(item_t), allocatable :: keys(:)
+end function
+ !> Assignment (copy)
+pure module subroutine dict_set_copy(dest, source)
+   class(dict_set_base_t), intent(inout) :: dest
+   class(dict_set_base_t), intent(in) :: source
+end subroutine
 end interface
 
 interface operator(.in.)
-   module procedure key_in_tree
+module procedure key_in_tree
 end interface
 
 public :: operator(.in.)
 
 interface size
-   elemental module function tree_size(tree)
-      class(dict_set_base_t), intent(in) :: tree
-      integer :: tree_size
-   end function
+elemental module function tree_size(tree)
+   class(dict_set_base_t), intent(in) :: tree
+   integer :: tree_size
+end function
 end interface
 
 public :: size
@@ -165,25 +165,25 @@ contains
 end type
 
 interface
-   !> Subroutine for inserting a hashable key to a dictionary/set.
-   pure module subroutine dict_insert(tab, key, val)
-      !> Hashmap.
-      class(dict_t), intent(inout) :: tab
-      !> Key or set item to be inserted.
-      class(*), intent(in) :: key
-      !> Value to be allocated in the dictionary.
-      class(*), intent(in) :: val
-   end subroutine
+ !> Subroutine for inserting a hashable key to a dictionary/set.
+pure module subroutine dict_insert(tab, key, val)
+   !> Hashmap.
+   class(dict_t), intent(inout) :: tab
+   !> Key or set item to be inserted.
+   class(*), intent(in) :: key
+   !> Value to be allocated in the dictionary.
+   class(*), intent(in) :: val
+end subroutine
 
-   !> Subroutine to get value.
-   pure module function dict_get(tab, key) result(val)
-      !> Hashmap.
-      class(dict_t), intent(in) :: tab
-      !> Key or set item to be queried.
-      class(*), intent(in) :: key
-      !> Return value, or yahft_not_found if key is not present.
-      class(*), allocatable :: val
-   end function
+ !> Subroutine to get value.
+pure module function dict_get(tab, key) result(val)
+   !> Hashmap.
+   class(dict_t), intent(in) :: tab
+   !> Key or set item to be queried.
+   class(*), intent(in) :: key
+   !> Return value, or yahft_not_found if key is not present.
+   class(*), allocatable :: val
+end function
 end interface
 
 public :: dict_t
@@ -195,13 +195,13 @@ contains
 end type
 
 interface
-   !> Subroutine for inserting a hashable key to a dictionary/set.
-   pure module subroutine set_insert(tab, key)
-      !> Set.
-      class(set_t), intent(inout) :: tab
-      !> Key or set item to be inserted.
-      class(*), intent(in) :: key
-   end subroutine
+ !> Subroutine for inserting a hashable key to a dictionary/set.
+pure module subroutine set_insert(tab, key)
+   !> Set.
+   class(set_t), intent(inout) :: tab
+   !> Key or set item to be inserted.
+   class(*), intent(in) :: key
+end subroutine
 end interface
 
 public :: set_t

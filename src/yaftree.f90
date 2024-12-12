@@ -89,6 +89,13 @@ type :: binary_tree_node_t
    class(*), allocatable :: value
 end type
 
+interface
+   pure recursive module subroutine binary_tree_copy( source_node, dest_node )
+      type(binary_tree_node_t), intent(in), allocatable :: source_node
+      type(binary_tree_node_t), intent(inout), allocatable :: dest_node
+   end subroutine
+end interface
+
 !> helper class to wrap allocatable items for keys/values
 type :: item_t
    class(*), allocatable :: key, value
@@ -105,6 +112,10 @@ contains
    ! below bugs ifx2025, so need to use interface
    ! generic :: operator(.in.) => contains
    procedure :: keys => get_tree_keys
+   ! gfortran 14 crashed trying to deep copy recursive types
+   ! so we help him
+   procedure, private :: dict_set_copy
+   generic:: assignment(=) => dict_set_copy
 end type
 
 interface
@@ -124,6 +135,11 @@ interface
       !> List of items
       type(item_t), allocatable :: keys(:)
    end function
+   !> Assignment (copy)
+   pure module subroutine dict_set_copy(dest, source)
+      class(dict_set_base_t), intent(inout) :: dest
+      class(dict_set_base_t), intent(in) :: source
+   end subroutine
 end interface
 
 interface operator(.in.)

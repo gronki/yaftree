@@ -11,7 +11,6 @@ auto-examples = true
 module-naming = false
 [install]
 library = true
-test = false
 [fortran]
 implicit-typing = false
 implicit-external = false

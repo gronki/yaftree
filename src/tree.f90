@@ -175,6 +175,36 @@ pure module function get_tree_keys(tree) result(keys)
 
 end function
 
+pure recursive module subroutine binary_tree_copy( source_node, dest_node )
+   type(binary_tree_node_t), intent(in), allocatable :: source_node
+   type(binary_tree_node_t), intent(inout), allocatable :: dest_node
+
+   if ( .not. allocated(source_node) ) return
+
+   allocate ( dest_node )
+
+   dest_node % hashed_key = source_node % hashed_key
+
+   if ( allocated(source_node % value) ) then
+      allocate( dest_node % value, source = source_node % value )
+   end if
+
+   call binary_tree_copy( source_node % lo_leaf, dest_node % lo_leaf )
+   call binary_tree_copy( source_node % hi_leaf, dest_node % hi_leaf )
+
+end subroutine
+
+pure module subroutine dict_set_copy(dest, source)
+   class(dict_set_base_t), intent(inout) :: dest
+   class(dict_set_base_t), intent(in) :: source
+
+   if ( allocated(dest % root) ) deallocate( dest % root )
+
+   call binary_tree_copy( dest_node = dest % root, source_node = source % root ) 
+   dest % hasher => source % hasher
+   
+end subroutine
+
 pure module subroutine dict_insert(tab, key, val)
    class(dict_t), intent(inout) :: tab
    class(*), intent(in) :: key, val

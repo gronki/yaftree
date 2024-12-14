@@ -1,6 +1,7 @@
 program test_traverse
 
    use yaftree_m
+   implicit none (type, external)
 
    type(set_t) :: set
    character(len=*), parameter :: words(*) = &
@@ -11,12 +12,12 @@ program test_traverse
    character(len=12), allocatable :: occurences(:)
 
    do i = 1, size(words)
-      call set%insert(trim(words(i)))
+      call insert(set, trim(words(i)))
    end do
 
    allocate(occurences(size(set)))
 
-   associate (items => set%keys())
+   associate (items => set % keys())
       do i =1, size(set)
          select type(key => items(i) % key)
          type is (character(len=*))

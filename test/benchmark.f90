@@ -1,6 +1,7 @@
 program benchmark_maps
 
    use yaftree_m
+   implicit none (type, external)
 
    type :: test_case_t
       character(len=20) :: word
@@ -65,7 +66,7 @@ contains
       do i = 1, 99999
          read (lun, *, iostat=errno) row
          if (errno /= 0) exit
-         call map % insert(trim(row), i)
+         call insert(map, trim(row), i)
       end do
       close(lun)
       print *, 'load and insert complete'
@@ -94,7 +95,7 @@ contains
       integer :: expected_pos
       logical :: is_correct1, is_correct2, is_correct
 
-      select type(actual_pos => map % get(key))
+      select type(actual_pos => get(map, key))
       type is(integer)
          is_correct1 = (actual_pos == expected_pos)
 
@@ -106,9 +107,9 @@ contains
             " retrieved:", "(NOTFND)", " " // trim(merge("   ", "ERR", is_correct1))
       end select
 
-      is_correct2 = (expected_pos /= -1) .eqv. map % contains(key)
+      is_correct2 = (expected_pos /= -1) .eqv. (key .in. map)
       write (*, "(a18, a10, l8, a10, l8, a5)") key, " exists ", expected_pos /= -1, &
-         " retrieved:", map%contains(key), " " // trim(merge("   ", "ERR", is_correct2))
+         " retrieved:", key .in. map, " " // trim(merge("   ", "ERR", is_correct2))
 
       is_correct = is_correct1 .and. is_correct2
    end function
@@ -128,7 +129,7 @@ contains
 
       do j = 1, loops
          do i = 1, size(test_cases)
-            select type (val => map % get(trim(test_cases(i) % word)))
+            select type (val => get(map, trim(test_cases(i) % word)))
             type is (integer)
                is_correct = is_correct .and. (val == test_cases(i) % pos)
             type is (key_not_found_t)

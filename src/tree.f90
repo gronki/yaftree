@@ -154,21 +154,21 @@ elemental module function tree_size(tree)
 end function
 
 !> retrieve copy of all stored keys
-pure module function get_tree_keys(tree) result(keys)
+pure module function get_tree_keys(tree) result(result_keys)
    !> Container to be queried.
    class(dict_set_base_t), intent(in) :: tree
    !> List of items
-   type(item_t), allocatable :: keys(:)
+   type(item_t), allocatable :: result_keys(:)
 
    integer :: item_num, n_elems
 
    n_elems = size(tree)
-   allocate(keys(n_elems))
+   allocate(result_keys(n_elems))
    if (n_elems == 0) return
 
    item_num = 0
 
-   call collect_items_recursive(tree % root, keys, item_num, 'K')
+   call collect_items_recursive(tree % root, result_keys, item_num, 'K')
 
    if (item_num /= n_elems) &
       error stop "yaftree: inconsistency while collecting tree items."
@@ -206,7 +206,7 @@ pure module subroutine dict_set_copy(dest, source)
 end subroutine
 
 pure module subroutine dict_insert(tab, key, val)
-   class(dict_t), intent(inout) :: tab
+   type(dict_t), intent(inout) :: tab
    class(*), intent(in) :: key, val
 
    call get_or_create_node(new_hashed_key(tab % hasher, key), &
@@ -216,7 +216,7 @@ end subroutine
 
 
 pure module function dict_get(tab, key) result(val)
-   class(dict_t), intent(in) :: tab
+   type(dict_t), intent(in) :: tab
    class(*), intent(in) :: key
    class(*), allocatable :: val
 
@@ -226,7 +226,7 @@ end function
 
 
 pure module subroutine set_insert(tab, key)
-   class(set_t), intent(inout) :: tab
+   type(set_t), intent(inout) :: tab
    class(*), intent(in) :: key
 
    call get_or_create_node(new_hashed_key(tab % hasher, key), &

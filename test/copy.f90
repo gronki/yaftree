@@ -1,18 +1,19 @@
 program test_copy
 
    use yaftree_m
+   implicit none (type, external)
 
    print '(a)', "     ***** TESTING DEEPCOPY *****"
 
    block
       type(set_t) :: set1, set2
 
-      call set1%insert("a")
-      call set1%insert("b")
+      call insert(set1, "a")
+      call insert(set1, "b")
 
       set2 = set1
 
-      call set2 % insert("c")
+      call insert(set2, "c")
 
       if ( ("c" .in. set2) .eqv. .FALSE. ) error stop
       if ( ("c" .in. set1) .eqv. .TRUE. ) error stop
@@ -22,7 +23,7 @@ program test_copy
 
       type(set_t) :: set1, set2
 
-      call set1 % insert(1)
+      call insert(set1, 1)
       set1 = set2
 
       if ( size(set1) /= 0 ) error stop

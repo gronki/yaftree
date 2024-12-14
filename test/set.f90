@@ -7,13 +7,13 @@ program settest
 
    print '(a)', " ********* TESTING SET *********"
 
-   call myset % insert("abc")
-   call myset % insert(3)
-   call myset % insert(1.0)
+   call insert(myset, "abc")
+   call insert(myset, 3)
+   call insert(myset, 1.0)
 
-   if (myset % contains("abc") .neqv. .true.) error stop
-   if (myset % contains(3) .neqv. .true.) error stop
-   if (myset % contains(34) .neqv. .false.) error stop
+   if (("abc" .in. myset) .neqv. .true.) error stop
+   if ((3 .in. myset) .neqv. .true.) error stop
+   if ((34 .in. myset) .neqv. .false.) error stop
    if ((1.0 .in. myset) .neqv. .true.) error stop
    if (size(myset) /= 3) error stop
 

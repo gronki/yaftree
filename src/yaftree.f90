@@ -6,6 +6,7 @@
 module yaftree_m
 
 use iso_fortran_env, only: int8, int32
+implicit none (type, external)
 private
 
 integer, parameter :: hash_k = int32
@@ -108,17 +109,21 @@ type :: dict_set_base_t
    !> the hasher_proto inteface.
    procedure(hasher_proto), nopass, pointer :: hasher => fnv_hash
 contains
-   procedure, pass(tree) :: contains => key_in_tree
-   ! below bugs ifx2025, so need to use interface
-   ! generic :: operator(.in.) => contains
-   procedure :: keys => get_tree_keys
    ! gfortran 14 crashed trying to deep copy recursive types
    ! so we help him
-   procedure, private :: dict_set_copy
-   generic:: assignment(=) => dict_set_copy
+   procedure, non_overridable, private :: dict_set_copy
+   generic :: assignment(=) => dict_set_copy
+   procedure, non_overridable :: keys => get_tree_keys
 end type
 
-interface
+interface size
+elemental module function tree_size(tree)
+   class(dict_set_base_t), intent(in) :: tree
+   integer :: tree_size
+end function
+end interface
+
+interface operator(.in.)
  !> Subroutine to get value.
 elemental module function key_in_tree(key, tree) result(contains)
    !> Key or set item to be queried.
@@ -128,13 +133,20 @@ elemental module function key_in_tree(key, tree) result(contains)
    !> Return value, or yahft_not_found if key is not present.
    logical :: contains
 end function
- !> retrieve copy of all stored keys
-pure module function get_tree_keys(tree) result(keys)
+end interface
+
+interface keys
+!> retrieve copy of all stored keys
+!> Warning: in gfortran, use ``tree%keys()`` rather than ``keys(tree)`` with ``associate``.
+pure module function get_tree_keys(tree) result(result_keys)
    !> Container to be queried.
    class(dict_set_base_t), intent(in) :: tree
    !> List of items
-   type(item_t), allocatable :: keys(:)
+   type(item_t), allocatable :: result_keys(:)
 end function
+end interface
+
+interface ! bound to type dict_set_base_t
  !> Assignment (copy)
 pure module subroutine dict_set_copy(dest, source)
    class(dict_set_base_t), intent(inout) :: dest
@@ -142,43 +154,27 @@ pure module subroutine dict_set_copy(dest, source)
 end subroutine
 end interface
 
-interface operator(.in.)
-module procedure key_in_tree
-end interface
-
-public :: operator(.in.)
-
-interface size
-elemental module function tree_size(tree)
-   class(dict_set_base_t), intent(in) :: tree
-   integer :: tree_size
-end function
-end interface
-
-public :: size
-
  !> Binary tree dict/hashmap implementation.
 type, extends(dict_set_base_t) :: dict_t
-contains
-   procedure :: insert => dict_insert
-   procedure :: get => dict_get
 end type
 
-interface
+interface insert
  !> Subroutine for inserting a hashable key to a dictionary/set.
 pure module subroutine dict_insert(tab, key, val)
    !> Hashmap.
-   class(dict_t), intent(inout) :: tab
+   type(dict_t), intent(inout) :: tab
    !> Key or set item to be inserted.
    class(*), intent(in) :: key
    !> Value to be allocated in the dictionary.
    class(*), intent(in) :: val
 end subroutine
+end interface
 
+interface get
  !> Subroutine to get value.
 pure module function dict_get(tab, key) result(val)
    !> Hashmap.
-   class(dict_t), intent(in) :: tab
+   type(dict_t), intent(in) :: tab
    !> Key or set item to be queried.
    class(*), intent(in) :: key
    !> Return value, or yahft_not_found if key is not present.
@@ -186,24 +182,20 @@ pure module function dict_get(tab, key) result(val)
 end function
 end interface
 
-public :: dict_t
-
  !> Binary tree dict/hashmap implementation.
 type, extends(dict_set_base_t) :: set_t
-contains
-   procedure :: insert => set_insert
 end type
 
-interface
+interface insert
  !> Subroutine for inserting a hashable key to a dictionary/set.
 pure module subroutine set_insert(tab, key)
    !> Set.
-   class(set_t), intent(inout) :: tab
+   type(set_t), intent(inout) :: tab
    !> Key or set item to be inserted.
    class(*), intent(in) :: key
 end subroutine
 end interface
 
-public :: set_t
+public :: dict_t, set_t, item_t, insert, get, size, keys, operator(.in.)
 
 end module yaftree_m

@@ -42,11 +42,19 @@ end function
 elemental module function hashed_keys_equal(key, other)
    type(hashed_key_t), intent(in) :: key, other
    logical :: hashed_keys_equal
+   integer :: i
 
    hashed_keys_equal = .false.
+   ! hashes must be equal
    if (key % hash /= other % hash) return
+   ! dynamic types of key must be equal
+   if (.not. same_type_as(key % orig_key, other % orig_key)) return
+   ! storage size of keys must be equal
    if (size(key % key) /= size(other % key)) return
-   if (any(key % key /= other % key)) return
+   ! byte values of keys must be equal
+   do i = 1, size(key % key)
+      if (key % key(i) /= other % key(i)) return
+   end do
    hashed_keys_equal = .true.
 
 end function

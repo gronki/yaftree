@@ -98,7 +98,7 @@ end subroutine
 end interface
 
 !> helper class to wrap allocatable items for keys/values
-type :: item_t
+type :: dict_set_item_t
    class(*), allocatable :: key, value
 end type
 
@@ -135,6 +135,18 @@ elemental module function key_in_tree(key, tree) result(contains)
 end function
 end interface
 
+interface operator(.notin.)
+ !> Subroutine to get value.
+elemental module function key_not_in_tree(key, tree) result(not_contains)
+   !> Key or set item to be queried.
+   class(*), intent(in) :: key
+   !> Hashmap.
+   class(dict_set_base_t), intent(in) :: tree
+   !> Return value, or yahft_not_found if key is not present.
+   logical :: not_contains
+end function
+end interface
+
 interface keys
 !> retrieve copy of all stored keys
 !> Warning: in gfortran, use ``tree%keys()`` rather than ``keys(tree)`` with ``associate``.
@@ -142,7 +154,7 @@ pure module function get_tree_keys(tree) result(result_keys)
    !> Container to be queried.
    class(dict_set_base_t), intent(in) :: tree
    !> List of items
-   type(item_t), allocatable :: result_keys(:)
+   type(dict_set_item_t), allocatable :: result_keys(:)
 end function
 end interface
 
@@ -196,6 +208,6 @@ pure module subroutine set_insert(tab, key)
 end subroutine
 end interface
 
-public :: dict_t, set_t, item_t, insert, get, size, keys, operator(.in.)
+public :: dict_t, set_t, dict_set_item_t, insert, get, size, keys, operator(.in.), operator(.notin.)
 
 end module yaftree_m

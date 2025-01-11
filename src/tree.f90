@@ -115,7 +115,7 @@ end subroutine
 
 recursive pure subroutine collect_items_recursive(node, items, item_index, what)
    type(binary_tree_node_t), allocatable, intent(in) :: node
-   type(item_t), intent(inout) :: items(:)
+   type(dict_set_item_t), intent(inout) :: items(:)
    integer, intent(inout) :: item_index
    character(len=1), intent(in) :: what
 
@@ -143,6 +143,16 @@ elemental module function key_in_tree(key, tree) result(contains)
 
 end function
 
+elemental module function key_not_in_tree(key, tree) result(not_contains)
+   !> Key or set item to be queried.
+   class(*), intent(in) :: key
+   !> Hashmap.
+   class(dict_set_base_t), intent(in) :: tree
+   !> Return value, or yahft_not_found if key is not present.
+   logical :: not_contains
+
+   not_contains = .not. key_in_tree(key, tree)
+end function
 
 elemental module function tree_size(tree)
    class(dict_set_base_t), intent(in) :: tree
@@ -158,7 +168,7 @@ pure module function get_tree_keys(tree) result(result_keys)
    !> Container to be queried.
    class(dict_set_base_t), intent(in) :: tree
    !> List of items
-   type(item_t), allocatable :: result_keys(:)
+   type(dict_set_item_t), allocatable :: result_keys(:)
 
    integer :: item_num, n_elems
 

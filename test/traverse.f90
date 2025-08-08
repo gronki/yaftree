@@ -8,7 +8,7 @@ program test_traverse
       [character(len=12) :: "this", "is", "my", "body", "and", "my", "soul", "and", "my", "mind"]
    character(len=*), parameter :: uniq_words(*) = &
       [character(len=12) :: "this", "is", "my", "body", "and", "soul", "mind"]
-   integer :: i
+   integer :: i, count_uniq
    character(len=12), allocatable :: occurences(:)
 
    do i = 1, size(words)
@@ -28,11 +28,13 @@ program test_traverse
    end associate
 
    do i = 1, size(uniq_words)
-      if (count(uniq_words(i) == occurences) /= 1) error stop
+      count_uniq = count(uniq_words(i) == occurences)
+      print *, trim(uniq_words(i)), " occurs times: ", count_uniq
+      if (count_uniq /= 1) error stop "count(uniq_words(i) == occurences) /= 1"
    end do
 
    print *, size(set)
 
-   if (size(set) /= size(uniq_words)) error stop
+   if (size(set) /= size(uniq_words)) error stop "size(set) /= size(uniq_words)"
 
 end program test_traverse

@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gcc-ver: [11, 12, 13, 14]
+        gcc-ver: [12, 13, 14]
 
     name: gfortran ${{ matrix.gcc-ver }}
     steps:
@@ -27,6 +27,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gfortran-${{ matrix.gcc-ver }} curl
           echo "FPM_FC=gfortran-${{ matrix.gcc-ver }}" >> $GITHUB_ENV
+          echo "FPM_CC=gcc-${{ matrix.gcc-ver }}" >> $GITHUB_ENV
+          echo "FPM_CXX=g++-${{ matrix.gcc-ver }}" >> $GITHUB_ENV
 
       - name: Install fpm
         run: |

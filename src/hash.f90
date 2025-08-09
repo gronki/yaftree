@@ -33,7 +33,15 @@ pure module function new_hashed_key(hasher, key) result(hashed_key)
    type(hashed_key_t) :: hashed_key
 
    hashed_key % orig_key = key
-   hashed_key % key = transfer(key, hashed_key % key)
+
+   select type(key)
+   type is (character(len=*))
+      ! fix for gfortran 12 that cannot correctly infer the string size
+      hashed_key % key = transfer(key, hashed_key % key)
+   class default
+      hashed_key % key = transfer(key, hashed_key % key)
+   end select
+
    hashed_key % hash = hasher(hashed_key % key)
 
 end function

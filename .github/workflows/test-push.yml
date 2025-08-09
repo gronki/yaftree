@@ -44,9 +44,9 @@ jobs:
       - name: Run tests (release)
         run: ./fpm test --profile release --flag '-g -ffree-line-length-none'
 
-  test_intel:
+  oneapi:
     runs-on: ubuntu-24.04
-    name: oneapi
+    name: oneapi (latest)
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -88,7 +88,7 @@ jobs:
           source /opt/intel/oneapi/setvars.sh
           ./fpm test --profile release --flag -g
 
-  test_flang:
+  flang:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -105,7 +105,7 @@ jobs:
       - name: Install flang ${{ matrix.llvm-ver }}
         run: |
           export DEBIAN_FRONTEND=noninteractive
-          sudo apt-get update && \
+          sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             gnupg \
             lsb-release \
@@ -126,7 +126,6 @@ jobs:
       - name: Install fpm
         run: |
           curl -L https://github.com/fortran-lang/fpm/releases/download/v0.12.0/fpm-0.12.0.F90 -o fpm.F90
-          source /opt/intel/oneapi/setvars.sh
           gfortran -O -g fpm.F90 -o fpm
 
       - name: Download test dataset

@@ -132,7 +132,7 @@ jobs:
         run: bash get-test-data.sh
 
       - name: Run tests (debug)
-        run: ./fpm test --profile debug
+        run: ./fpm test --flag '-g -O0'
 
       - name: Run tests (release)
-        run: ./fpm test --profile release --flag -g
+        run: ./fpm test --flag '-g -O3'

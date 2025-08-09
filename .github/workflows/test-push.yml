@@ -32,7 +32,7 @@ jobs:
 
       - name: Install fpm
         run: |
-          curl -L https://github.com/fortran-lang/fpm/releases/download/v0.11.0/fpm-0.11.0.F90 -o fpm.F90
+          curl -L https://github.com/fortran-lang/fpm/releases/download/v0.12.0/fpm-0.12.0.F90 -o fpm.F90
           $FPM_FC -O0 fpm.F90 -o fpm
 
       - name: Download test dataset
@@ -71,7 +71,7 @@ jobs:
 
       - name: Install fpm
         run: |
-          curl -L https://github.com/fortran-lang/fpm/releases/download/v0.11.0/fpm-0.11.0.F90 -o fpm.F90
+          curl -L https://github.com/fortran-lang/fpm/releases/download/v0.12.0/fpm-0.12.0.F90 -o fpm.F90
           source /opt/intel/oneapi/setvars.sh
           $FPM_FC -O0 fpm.F90 -o fpm
 
@@ -87,3 +87,53 @@ jobs:
         run: |
           source /opt/intel/oneapi/setvars.sh
           ./fpm test --profile release --flag -g
+
+  test_flang:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm-ver: [19, 20]
+
+    name: flang ${{ matrix.llvm-ver }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install flang ${{ matrix.llvm-ver }}
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update && \
+          sudo apt-get install -y --no-install-recommends \
+            gnupg \
+            lsb-release \
+            ca-certificates \
+            curl \
+            gnupg2 \
+            apt-transport-https \
+            gfortran
+          curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/llvm.asc >/dev/null
+          echo "deb [signed-by=/etc/apt/trusted.gpg.d/llvm.asc] http://apt.llvm.org/noble/ llvm-toolchain-noble-${{ matrix.llvm-ver }} main" \
+            | tee /etc/apt/sources.list.d/llvm.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y clang-${{ matrix.llvm-ver }} flang-${{ matrix.llvm-ver }}
+          echo "FPM_FC=flang-new-${{ matrix.llvm-ver }}" >> $GITHUB_ENV
+          echo "FPM_CC=clang-${{ matrix.llvm-ver }}" >> $GITHUB_ENV
+          echo "FPM_CXX=clang-${{ matrix.llvm-ver }}" >> $GITHUB_ENV
+
+      - name: Install fpm
+        run: |
+          curl -L https://github.com/fortran-lang/fpm/releases/download/v0.12.0/fpm-0.12.0.F90 -o fpm.F90
+          source /opt/intel/oneapi/setvars.sh
+          gfortran -O -g fpm.F90 -o fpm
+
+      - name: Download test dataset
+        run: bash get-test-data.sh
+
+      - name: Run tests (debug)
+        run: ./fpm test --profile debug
+
+      - name: Run tests (release)
+        run: ./fpm test --profile release --flag -g

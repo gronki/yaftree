@@ -12,7 +12,8 @@ elemental logical function present_and_true(arg)
 end function
 
 
-recursive pure subroutine get_or_create_node(hashed_key, node, get_value, put_value, alloc_node)
+recursive subroutine get_or_create_node(key, hashed_key, node, get_value, put_value, alloc_node)
+   class(*), intent(in) :: key
    type(hashed_key_t), intent(in) :: hashed_key
    type(binary_tree_node_t), intent(inout), allocatable :: node
    class(*), intent(inout), allocatable, optional :: get_value
@@ -25,6 +26,7 @@ recursive pure subroutine get_or_create_node(hashed_key, node, get_value, put_va
       end if
       if (present(put_value) .or. present_and_true(alloc_node)) then
          allocate(node)
+         node % orig_key = key
          node % hashed_key = hashed_key
       end if
       if (present(put_value)) then
@@ -33,24 +35,25 @@ recursive pure subroutine get_or_create_node(hashed_key, node, get_value, put_va
       return
    end if
 
-   if (hashed_key == node % hashed_key) then
+   if (hashed_key == node % hashed_key .and. same_type_as(key, node % orig_key)) then
       if (present(get_value)) get_value = node % value
       if (present(put_value)) node % value = put_value
       return
    end if
 
    if (hashed_key < node % hashed_key) then
-      call get_or_create_node(hashed_key, node % lo_leaf, &
+      call get_or_create_node(key, hashed_key, node % lo_leaf, &
          get_value=get_value, put_value=put_value, alloc_node=alloc_node)
    else
-      call get_or_create_node(hashed_key, node % hi_leaf, &
+      call get_or_create_node(key, hashed_key, node % hi_leaf, &
          get_value=get_value, put_value=put_value, alloc_node=alloc_node)
    end if
 
 end subroutine
 
 
-recursive pure subroutine get_value_recursive(hashed_key, node, val)
+recursive subroutine get_value_recursive(key, hashed_key, node, val)
+   class(*), intent(in) :: key
    type(hashed_key_t), intent(in) :: hashed_key
    type(binary_tree_node_t), allocatable, intent(in) :: node
    class(*), intent(inout), allocatable :: val
@@ -60,21 +63,22 @@ recursive pure subroutine get_value_recursive(hashed_key, node, val)
       return
    end if
 
-   if (hashed_key == node % hashed_key) then
+   if (hashed_key == node % hashed_key .and. same_type_as(key, node % orig_key)) then
       val = node % value
       return
    end if
 
    if (hashed_key < node % hashed_key) then
-      call get_value_recursive(hashed_key, node % lo_leaf, val)
+      call get_value_recursive(key, hashed_key, node % lo_leaf, val)
    else
-      call get_value_recursive(hashed_key, node % hi_leaf, val)
+      call get_value_recursive(key, hashed_key, node % hi_leaf, val)
    end if
 
 end subroutine
 
 
-recursive pure subroutine check_key_recursive(hashed_key, node, key_found)
+pure recursive subroutine check_key_recursive(key, hashed_key, node, key_found)
+   class(*), intent(in) :: key
    type(hashed_key_t), intent(in) :: hashed_key
    type(binary_tree_node_t), allocatable, intent(in) :: node
    logical, intent(out) :: key_found
@@ -84,21 +88,21 @@ recursive pure subroutine check_key_recursive(hashed_key, node, key_found)
       return
    end if
 
-   if (hashed_key == node % hashed_key) then
+   if (hashed_key == node % hashed_key .and. same_type_as(key, node % orig_key)) then
       key_found = .true.
       return
    end if
 
    if (hashed_key < node % hashed_key) then
-      call check_key_recursive(hashed_key, node % lo_leaf, key_found)
+      call check_key_recursive(key, hashed_key, node % lo_leaf, key_found)
    else
-      call check_key_recursive(hashed_key, node % hi_leaf, key_found)
+      call check_key_recursive(key, hashed_key, node % hi_leaf, key_found)
    end if
 
 end subroutine
 
 
-recursive pure subroutine count_size_recursive(node, tree_size)
+pure recursive subroutine count_size_recursive(node, tree_size)
    type(binary_tree_node_t), allocatable, intent(in) :: node
    integer, intent(inout) :: tree_size
 
@@ -113,7 +117,7 @@ recursive pure subroutine count_size_recursive(node, tree_size)
 
 end subroutine
 
-recursive pure subroutine collect_items_recursive(node, items, item_index, what)
+recursive subroutine collect_items_recursive(node, items, item_index, what)
    type(binary_tree_node_t), allocatable, intent(in) :: node
    type(dict_set_item_t), intent(inout) :: items(:)
    integer, intent(inout) :: item_index
@@ -125,7 +129,7 @@ recursive pure subroutine collect_items_recursive(node, items, item_index, what)
 
    item_index = item_index + 1
 
-   if (what /= 'V') items(item_index) % key = node % hashed_key % orig_key
+   if (what /= 'V') items(item_index) % key = node % orig_key
    if (what /= 'K') items(item_index) % value = node % value
 
    call collect_items_recursive(node % lo_leaf, items, item_index, what)
@@ -139,7 +143,10 @@ elemental module function key_in_tree(key, tree) result(contains)
    class(dict_set_base_t), intent(in) :: tree
    logical :: contains
 
-   call check_key_recursive(new_hashed_key(tree % hasher, key), tree % root, contains)
+   if (.not. associated(tree % hasher)) &
+      error stop "ERROR: hash function not associated for set, example: container%hasher => fnv_hash"
+
+   call check_key_recursive(key, hashed_key_t(tree % hasher, key), tree % root, contains)
 
 end function
 
@@ -164,7 +171,7 @@ elemental module function tree_size(tree)
 end function
 
 !> retrieve copy of all stored keys
-pure module function get_tree_keys(tree) result(result_keys)
+module function get_tree_keys(tree) result(result_keys)
    !> Container to be queried.
    class(dict_set_base_t), intent(in) :: tree
    !> List of items
@@ -185,7 +192,7 @@ pure module function get_tree_keys(tree) result(result_keys)
 
 end function
 
-pure recursive module subroutine binary_tree_copy( source_node, dest_node )
+recursive module subroutine binary_tree_copy( source_node, dest_node )
    type(binary_tree_node_t), intent(in), allocatable :: source_node
    type(binary_tree_node_t), intent(inout), allocatable :: dest_node
 
@@ -194,6 +201,7 @@ pure recursive module subroutine binary_tree_copy( source_node, dest_node )
    allocate ( dest_node )
 
    dest_node % hashed_key = source_node % hashed_key
+   allocate( dest_node % orig_key, source = source_node % orig_key )
 
    if ( allocated(source_node % value) ) then
       allocate( dest_node % value, source = source_node % value )
@@ -204,7 +212,7 @@ pure recursive module subroutine binary_tree_copy( source_node, dest_node )
 
 end subroutine
 
-pure module subroutine dict_set_copy(dest, source)
+module subroutine dict_set_copy(dest, source)
    class(dict_set_base_t), intent(inout) :: dest
    class(dict_set_base_t), intent(in) :: source
 
@@ -215,31 +223,41 @@ pure module subroutine dict_set_copy(dest, source)
 
 end subroutine
 
-pure module subroutine dict_insert(tab, key, val)
+module subroutine dict_insert(tab, key, val)
    type(dict_t), intent(inout) :: tab
    class(*), intent(in) :: key, val
 
-   call get_or_create_node(new_hashed_key(tab % hasher, key), &
+   if (.not. associated(tab % hasher)) &
+      error stop "ERROR: hash function not associated for set, example: mydict%hasher => fnv_hash"
+
+   call get_or_create_node(key, hashed_key_t(tab % hasher, key), &
       tab % root, put_value=val)
 
 end subroutine
 
 
-pure module function dict_get(tab, key) result(val)
+module function dict_get(tab, key) result(val)
    type(dict_t), intent(in) :: tab
    class(*), intent(in) :: key
    class(*), allocatable :: val
 
-   call get_value_recursive(new_hashed_key(tab % hasher, key), tab % root, val)
+   if (.not. associated(tab % hasher)) &
+      error stop "ERROR: hash function not associated for set, example: mydict%hasher => fnv_hash"
+
+   call get_value_recursive(key, hashed_key_t(tab % hasher, key), &
+      tab % root, val)
 
 end function
 
 
-pure module subroutine set_insert(tab, key)
+module subroutine set_insert(tab, key)
    type(set_t), intent(inout) :: tab
    class(*), intent(in) :: key
 
-   call get_or_create_node(new_hashed_key(tab % hasher, key), &
+   if (.not. associated(tab % hasher)) &
+      error stop "ERROR: hash function not associated for set, example: myset%hasher => fnv_hash"
+
+   call get_or_create_node(key, hashed_key_t(tab % hasher, key), &
       tab % root, alloc_node=.true.)
 
 end subroutine

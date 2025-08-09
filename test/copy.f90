@@ -7,6 +7,8 @@ program test_copy
 
    block
       type(set_t) :: set1, set2
+      set1%hasher => fnv_hash
+      set2%hasher => fnv_hash
 
       call insert(set1, "a")
       call insert(set1, "b")
@@ -22,7 +24,9 @@ program test_copy
    block
 
       type(set_t) :: set1, set2
-
+      set1%hasher => fnv_hash
+      set2%hasher => fnv_hash
+      
       call insert(set1, 1)
       set1 = set2
 

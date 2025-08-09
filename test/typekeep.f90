@@ -13,6 +13,7 @@ program test_type_preserve
 
    block
       type(set_t) :: set
+      set % hasher => fnv_hash
 
       call insert(set, s1)
       if ( (s1 .in. set) .neqv. .true. ) error stop 101
@@ -21,6 +22,7 @@ program test_type_preserve
    
    block
       type(set_t) :: set
+      set % hasher => fnv_hash
 
       call insert(set, a)
       if ( (s1 .in. set) .neqv. .false. ) error stop 201

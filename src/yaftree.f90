@@ -39,8 +39,6 @@ public :: fnv_hash
 type :: hashed_key_t
    !> Key, TRANSFERed to int8 array.
    integer(kind=int8), allocatable :: key(:)
-   !> Original key, only kept for retrieval
-   class(*), allocatable :: orig_key
    !> Computer hash value.
    integer(kind=hash_k) :: hash = 0
 end type
@@ -79,6 +77,8 @@ public :: hashed_key_t, operator(==), operator(<)
 type key_not_found_t
 end type
 
+type(key_not_found_t), target :: not_found
+
 public :: key_not_found_t
 
  !> Binary tree node.
@@ -87,12 +87,12 @@ type :: binary_tree_node_t
    type(binary_tree_node_t), allocatable :: lo_leaf, hi_leaf
    !> Hashed key.
    type(hashed_key_t) :: hashed_key
-   !> Allocatable value.
-   class(*), allocatable :: value
+   !> Allocatable key and value.
+   class(*), allocatable :: orig_key, value
 end type
 
 interface
-pure recursive module subroutine binary_tree_copy( source_node, dest_node )
+recursive module subroutine binary_tree_copy( source_node, dest_node )
    type(binary_tree_node_t), intent(in), allocatable :: source_node
    type(binary_tree_node_t), intent(inout), allocatable :: dest_node
 end subroutine
@@ -151,7 +151,7 @@ end interface
 interface keys
 !> retrieve copy of all stored keys
 !> Warning: in gfortran, use ``tree%keys()`` rather than ``keys(tree)`` with ``associate``.
-pure module function get_tree_keys(tree) result(result_keys)
+module function get_tree_keys(tree) result(result_keys)
    !> Container to be queried.
    class(dict_set_base_t), intent(in) :: tree
    !> List of items
@@ -161,7 +161,7 @@ end interface
 
 interface ! bound to type dict_set_base_t
  !> Assignment (copy)
-pure module subroutine dict_set_copy(dest, source)
+module subroutine dict_set_copy(dest, source)
    class(dict_set_base_t), intent(inout) :: dest
    class(dict_set_base_t), intent(in) :: source
 end subroutine
@@ -173,7 +173,7 @@ end type
 
 interface insert
  !> Subroutine for inserting a hashable key to a dictionary/set.
-pure module subroutine dict_insert(tab, key, val)
+module subroutine dict_insert(tab, key, val)
    !> Hashmap.
    type(dict_t), intent(inout) :: tab
    !> Key or set item to be inserted.
@@ -185,7 +185,7 @@ end interface
 
 interface get
  !> Subroutine to get value.
-pure module function dict_get(tab, key) result(val)
+module function dict_get(tab, key) result(val)
    !> Hashmap.
    type(dict_t), intent(in) :: tab
    !> Key or set item to be queried.
@@ -201,7 +201,7 @@ end type
 
 interface insert
  !> Subroutine for inserting a hashable key to a dictionary/set.
-pure module subroutine set_insert(tab, key)
+module subroutine set_insert(tab, key)
    !> Set.
    type(set_t), intent(inout) :: tab
    !> Key or set item to be inserted.

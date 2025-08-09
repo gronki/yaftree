@@ -4,6 +4,7 @@ program settest
    implicit none
 
    type(set_t) :: myset
+   myset%hasher => fnv_hash
 
    print '(a)', " ********* TESTING SET *********"
 

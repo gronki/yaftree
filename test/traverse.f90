@@ -11,10 +11,14 @@ program test_traverse
    integer :: i, count_uniq
    character(len=12), allocatable :: occurences(:)
 
+   set % hasher => fnv_hash
+
+   print *, 'insert'
    do i = 1, size(words)
       call insert(set, trim(words(i)))
    end do
 
+   print *, 'check 1'
    do i = 1, size(words)
       if (trim(words(i)) .notin. set) then
          print *, "word ", trim(words(i)), " inserted but lost in the set"

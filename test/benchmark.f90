@@ -30,6 +30,7 @@ program benchmark_maps
 
    block
       type(dict_t) :: map
+      map%hasher => fnv_hash
       print *, "=========== HASH = FNV_HASH ==========="
       call load_dataset(map)
       call test_correctness(map)

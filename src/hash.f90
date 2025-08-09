@@ -32,8 +32,6 @@ pure module function new_hashed_key(hasher, key) result(hashed_key)
    class(*), intent(in) :: key
    type(hashed_key_t) :: hashed_key
 
-   hashed_key % orig_key = key
-
    select type(key)
    type is (character(len=*))
       ! fix for gfortran 12 that cannot correctly infer the string size
@@ -55,8 +53,6 @@ elemental module function hashed_keys_equal(key, other)
    hashed_keys_equal = .false.
    ! hashes must be equal
    if (key % hash /= other % hash) return
-   ! dynamic types of key must be equal
-   if (.not. same_type_as(key % orig_key, other % orig_key)) return
    ! storage size of keys must be equal
    if (size(key % key) /= size(other % key)) return
    ! byte values of keys must be equal

@@ -15,6 +15,19 @@ program test_traverse
       call insert(set, trim(words(i)))
    end do
 
+   do i = 1, size(words)
+      if (trim(words(i)) .notin. set) then
+         print *, "word ", trim(words(i)), " inserted but lost in the set"
+         error stop 
+      endif
+   end do
+
+   print *, "no word was lost"
+
+   print *, size(set)
+
+   if (size(set) /= size(uniq_words)) error stop "size(set) /= size(uniq_words)"
+
    allocate(occurences(size(set)))
 
    associate (items => set % keys())
@@ -32,9 +45,5 @@ program test_traverse
       print *, trim(uniq_words(i)), " occurs times: ", count_uniq
       if (count_uniq /= 1) error stop "count(uniq_words(i) == occurences) /= 1"
    end do
-
-   print *, size(set)
-
-   if (size(set) /= size(uniq_words)) error stop "size(set) /= size(uniq_words)"
 
 end program test_traverse

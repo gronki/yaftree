@@ -73,6 +73,7 @@ elemental module function hashed_keys_less(key, other)
 end function
 end interface
 
+public :: hashed_key_t, operator(==), operator(<)
 
  !> Object of type key_not_found_t is returned by get() when they key was not found.
 type key_not_found_t

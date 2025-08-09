@@ -46,7 +46,11 @@ jobs:
 
   oneapi:
     runs-on: ubuntu-24.04
-    name: oneapi (latest)
+    strategy:
+      fail-fast: false
+      matrix:
+        oneapi-ver: ["2025.1", "2025.0"]
+    name: oneapi ${{ matrix.oneapi-ver }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -58,13 +62,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gpg gpg-agent wget git curl
           wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \
-            | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg
+            | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg >/dev/null
           echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] " \
             " https://apt.repos.intel.com/oneapi all main" \
             | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt-get update && sudo apt-get install -y --no-install-recommends \
-            intel-oneapi-compiler-fortran \
-            intel-oneapi-compiler-dpcpp-cpp 
+            intel-oneapi-compiler-fortran-${{ matrix.oneapi-ver }} \
+            intel-oneapi-compiler-dpcpp-cpp-${{ matrix.oneapi-ver }} 
           echo "FPM_FC=ifx" >> $GITHUB_ENV
           echo "FPM_CC=icx" >> $GITHUB_ENV
           echo "FPM_CXX=icpx" >> $GITHUB_ENV

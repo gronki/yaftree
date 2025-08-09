@@ -116,7 +116,7 @@ jobs:
             gfortran
           curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/llvm.asc >/dev/null
           echo "deb [signed-by=/etc/apt/trusted.gpg.d/llvm.asc] http://apt.llvm.org/noble/ llvm-toolchain-noble-${{ matrix.llvm-ver }} main" \
-            | tee /etc/apt/sources.list.d/llvm.list >/dev/null
+            | sudo tee /etc/apt/sources.list.d/llvm.list >/dev/null
           sudo apt-get update
           sudo apt-get install -y clang-${{ matrix.llvm-ver }} flang-${{ matrix.llvm-ver }}
           echo "FPM_FC=flang-new-${{ matrix.llvm-ver }}" >> $GITHUB_ENV

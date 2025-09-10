@@ -6,6 +6,10 @@ program tree_demo
    type(dict_t) :: dict
    type(set_t) :: set
 
+   ! warning: neeeded for flang_new < 20
+   dict%hasher=>fnv_hash
+   set%hasher=>fnv_hash
+
    print *, 'call insert(set, "abc")'
    call insert(set, "abc")
    print *, 'call insert(set, 321)'

@@ -87,9 +87,13 @@ type :: binary_tree_node_t
    type(binary_tree_node_t), allocatable :: lo_leaf, hi_leaf
    !> Hashed key.
    type(hashed_key_t) :: hashed_key
-   !> Allocatable key and value.
-   class(*), allocatable :: orig_key, value
+   !> Allocatable key.
+   class(*), allocatable :: orig_key
+   !> Node value
+   class(*), allocatable :: value
 end type
+
+public :: binary_tree_node_t
 
 interface
 recursive module subroutine binary_tree_copy( source_node, dest_node )
@@ -195,6 +199,39 @@ module function dict_get(tab, key) result(val)
 end function
 end interface
 
+interface get_ptr
+ !> Subroutine to get value.
+module function dict_get_ptr(tab, key) result(ptr)
+   !> Hashmap.
+   type(dict_t), intent(in), target :: tab
+   !> Key or set item to be queried.
+   class(*), intent(in) :: key
+   !> Return value, or yahft_not_found if key is not present.
+   class(*), pointer :: ptr
+end function
+end interface
+
+interface get_node
+module function dict_get_node(tab, key, create) result(ptr)
+   !> Hashmap.
+   type(dict_t), intent(inout), target :: tab
+   !> Key or set item to be queried.
+   class(*), intent(in) :: key
+   !> Node pointer.
+   type(binary_tree_node_t), pointer :: ptr
+   !> create node if does not exist?
+   logical, intent(in) :: create
+end function
+module function dict_get_node_create(tab, key) result(ptr)
+   !> Hashmap.
+   type(dict_t), intent(inout), target :: tab
+   !> Key or set item to be queried.
+   class(*), intent(in) :: key
+   !> Node pointer.
+   type(binary_tree_node_t), pointer :: ptr
+end function
+end interface
+
  !> Binary tree dict/hashmap implementation.
 type, extends(dict_set_base_t) :: set_t
 end type
@@ -209,6 +246,7 @@ module subroutine set_insert(tab, key)
 end subroutine
 end interface
 
-public :: dict_t, set_t, dict_set_item_t, insert, get, size, keys, operator(.in.), operator(.notin.)
+public :: dict_t, set_t, dict_set_item_t, insert, get, get_ptr, get_node
+public :: size, keys, operator(.in.), operator(.notin.)
 
 end module yaftree_m

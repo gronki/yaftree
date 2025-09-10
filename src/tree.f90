@@ -21,17 +21,13 @@ recursive subroutine get_or_create_node(key, hashed_key, node, get_value, put_va
    logical, intent(in), optional :: alloc_node
 
    if (.not. allocated(node)) then
-      if (present(get_value)) then
-         get_value = key_not_found_t()
-      end if
+      if (present(get_value)) get_value = key_not_found_t()
       if (present(put_value) .or. present_and_true(alloc_node)) then
          allocate(node)
          node % orig_key = key
          node % hashed_key = hashed_key
       end if
-      if (present(put_value)) then
-         node % value = put_value
-      end if
+      if (present(put_value))  node % value = put_value
       return
    end if
 
@@ -47,6 +43,37 @@ recursive subroutine get_or_create_node(key, hashed_key, node, get_value, put_va
    else
       call get_or_create_node(key, hashed_key, node % hi_leaf, &
          get_value=get_value, put_value=put_value, alloc_node=alloc_node)
+   end if
+
+end subroutine
+
+recursive subroutine node_ref_recursive(key, hashed_key, node, create, node_ref)
+   class(*), intent(in) :: key
+   type(hashed_key_t), intent(in) :: hashed_key
+   type(binary_tree_node_t), intent(inout), allocatable, target :: node
+   type(binary_tree_node_t), pointer :: node_ref
+   logical, intent(in) :: create
+
+   if (.not. allocated(node)) then
+      if (.not. create) then
+         nullify(node_ref); return
+      end if
+      allocate(node)
+      node % orig_key = key
+      node % hashed_key = hashed_key
+      node_ref => node
+      return
+   end if
+
+   if (hashed_key == node % hashed_key .and. same_type_as(key, node % orig_key)) then
+      node_ref => node
+      return
+   end if
+
+   if (hashed_key < node % hashed_key) then
+      call node_ref_recursive(key, hashed_key, node % lo_leaf, create, node_ref)
+   else
+      call node_ref_recursive(key, hashed_key, node % hi_leaf, create, node_ref)
    end if
 
 end subroutine
@@ -72,6 +99,31 @@ recursive subroutine get_value_recursive(key, hashed_key, node, val)
       call get_value_recursive(key, hashed_key, node % lo_leaf, val)
    else
       call get_value_recursive(key, hashed_key, node % hi_leaf, val)
+   end if
+
+end subroutine
+
+
+recursive subroutine get_value_ptr_recursive(key, hashed_key, node, ptr)
+   class(*), intent(in) :: key
+   type(hashed_key_t), intent(in) :: hashed_key
+   type(binary_tree_node_t), allocatable, intent(in), target :: node
+   class(*), intent(inout), pointer :: ptr
+
+   if (.not. allocated(node)) then
+      ptr => not_found
+      return
+   end if
+
+   if (hashed_key == node % hashed_key .and. same_type_as(key, node % orig_key)) then
+      ptr => node % value
+      return
+   end if
+
+   if (hashed_key < node % hashed_key) then
+      call get_value_ptr_recursive(key, hashed_key, node % lo_leaf, ptr)
+   else
+      call get_value_ptr_recursive(key, hashed_key, node % hi_leaf, ptr)
    end if
 
 end subroutine
@@ -249,6 +301,44 @@ module function dict_get(tab, key) result(val)
 
 end function
 
+module function dict_get_ptr(tab, key) result(ptr)
+   type(dict_t), intent(in), target :: tab
+   class(*), intent(in) :: key
+   class(*), pointer :: ptr
+
+   if (.not. associated(tab % hasher)) &
+      error stop "ERROR: hash function not associated for set, example: mydict%hasher => fnv_hash"
+
+   call get_value_ptr_recursive(key, hashed_key_t(tab % hasher, key), &
+      tab % root, ptr)
+
+end function
+
+module function dict_get_node(tab, key, create) result(ptr)
+   !> Hashmap.
+   type(dict_t), intent(inout), target :: tab
+   !> Key or set item to be queried.
+   class(*), intent(in) :: key
+   !> Node pointer.
+   type(binary_tree_node_t), pointer :: ptr
+   !> create node if does not exist?
+   logical, intent(in) :: create
+
+   call node_ref_recursive(key, hashed_key_t(tab % hasher, key), &
+      tab % root, create, ptr)
+
+end function
+
+module function dict_get_node_create(tab, key) result(ptr)
+   !> Hashmap.
+   type(dict_t), intent(inout), target :: tab
+   !> Key or set item to be queried.
+   class(*), intent(in) :: key
+   !> Node pointer.
+   type(binary_tree_node_t), pointer :: ptr
+
+   ptr => dict_get_node(tab, key, .true.)
+end function
 
 module subroutine set_insert(tab, key)
    type(set_t), intent(inout) :: tab

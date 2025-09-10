@@ -324,6 +324,9 @@ module function dict_get_node(tab, key, create) result(ptr)
    !> create node if does not exist?
    logical, intent(in) :: create
 
+   if (.not. associated(tab % hasher)) &
+      error stop "ERROR: hash function not associated for set, example: mydict%hasher => fnv_hash"
+
    call node_ref_recursive(key, hashed_key_t(tab % hasher, key), &
       tab % root, create, ptr)
 
@@ -336,6 +339,9 @@ module function dict_get_node_create(tab, key) result(ptr)
    class(*), intent(in) :: key
    !> Node pointer.
    type(binary_tree_node_t), pointer :: ptr
+
+   if (.not. associated(tab % hasher)) &
+      error stop "ERROR: hash function not associated for set, example: mydict%hasher => fnv_hash"
 
    ptr => dict_get_node(tab, key, .true.)
 end function
